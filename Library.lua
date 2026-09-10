@@ -1450,7 +1450,7 @@ table.insert(Library.Signals, RunService.RenderStepped:Connect(function(Delta)
             end
         end
     end
-end)
+end))
 
 function Library:SetDPIScale(DPIScale: number)
     Library.DPIScale = DPIScale / 100

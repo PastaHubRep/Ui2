@@ -29,7 +29,7 @@ local Toggles = {}
 local Options = {}
 local Tooltips = {}
 
-local BaseURL = "https://raw.githubusercontent.com/PastaHubRep/Ui2/main/"
+local BaseURL = "https://raw.githubusercontent.com/PastaHubRep/Ui2/refs/heads/main/Library.lua"
 local CustomImageManager = {}
 local CustomImageManagerAssets = {
     TransparencyTexture = {
@@ -290,7 +290,7 @@ local Library = {
         BackgroundImage = ""
     },
 
-    --// Rainbow \\--
+    --// Rainbow UI \\--
     RainbowHue = 0,
     RainbowColor = Color3.fromHSV(0, 1, 1),
 
@@ -646,6 +646,10 @@ local SchemeAlias = {
 local function GetSchemeValue(Index)
     if not Index then
         return nil
+    end
+
+    if Index == "RainbowColor" then
+        return Library.RainbowColor
     end
 
     local ReplaceAliasIndex = SchemeReplaceAlias[Index]
@@ -1428,6 +1432,26 @@ function Library:UpdateColorsUsingRegistry()
         end
     end
 end
+
+--// Rainbow UI updater \\--
+Library:GiveSignal(RunService.RenderStepped:Connect(function(Delta)
+    if Library.Unloaded then
+        return
+    end
+
+    Library.RainbowHue = (Library.RainbowHue + Delta * 0.25) % 1
+    Library.RainbowColor = Color3.fromHSV(Library.RainbowHue, 1, 1)
+
+    for Instance, Properties in Library.Registry do
+        if Instance and Instance.Parent then
+            for Property, Index in Properties do
+                if Index == "RainbowColor" or Index == "OutlineColor" then
+                    Instance[Property] = Library.RainbowColor
+                end
+            end
+        end
+    end
+end)
 
 function Library:SetDPIScale(DPIScale: number)
     Library.DPIScale = DPIScale / 100
@@ -7085,7 +7109,6 @@ do
             Size = UDim2.fromOffset(32, 18),
             Parent = Button,
         })
-        Switch:SetAttribute("RainbowControl", true)
         New("UICorner", {
             CornerRadius = UDim.new(1, 0),
             Parent = Switch,
@@ -7128,10 +7151,10 @@ do
             SwitchStroke.Transparency = Toggle.Disabled and 0.75 or 0
 
             Switch.BackgroundColor3 = Toggle.Value and Library.RainbowColor or Library.Scheme.MainColor
-            SwitchStroke.Color = Toggle.Value and Library.RainbowColor or Library.Scheme.OutlineColor
+            SwitchStroke.Color = Toggle.Value and Library.RainbowColor or Library.RainbowColor
 
-            Library.Registry[Switch].BackgroundColor3 = Toggle.Value and "AccentColor" or "MainColor"
-            Library.Registry[SwitchStroke].Color = Toggle.Value and "AccentColor" or "OutlineColor"
+            Library.Registry[Switch].BackgroundColor3 = Toggle.Value and "RainbowColor" or "MainColor"
+            Library.Registry[SwitchStroke].Color = "RainbowColor"
 
             if Toggle.Disabled then
                 Label.TextTransparency = 0.8
@@ -7655,12 +7678,11 @@ do
         end
 
         local Fill = New("Frame", {
-            BackgroundColor3 = "AccentColor",
+            BackgroundColor3 = "RainbowColor",
             Size = UDim2.fromScale(0.5, 1),
             ZIndex = Bar.ZIndex + 1,
             Parent = Bar,
         })
-        Fill:SetAttribute("RainbowControl", true)
 
         table.insert(
             Library.Corners,
@@ -7692,8 +7714,8 @@ do
                 InputTextBox.TextTransparency = Slider.Disabled and 0.8 or 0
             end
 
-            Fill.BackgroundColor3 = Slider.Disabled and Library.Scheme.OutlineColor or Library.RainbowColor
-            Library.Registry[Fill].BackgroundColor3 = Slider.Disabled and "OutlineColor" or "AccentColor"
+            Fill.BackgroundColor3 = Slider.Disabled and Library.RainbowColor or Library.RainbowColor
+            Library.Registry[Fill].BackgroundColor3 = "RainbowColor"
         end
 
         function Slider:Display()
@@ -14718,34 +14740,4 @@ function Library:Unload()
 end
 
 getgenv().Library = Library
---// Rainbow outlines / slider fills / active switches\nLibrary:GiveSignal(RunService.RenderStepped:Connect(function(Delta)
-    if Library.Unloaded then
-        return
-    end
-
-    Library.RainbowHue = (Library.RainbowHue + Delta * 0.25) % 1
-    Library.RainbowColor = Color3.fromHSV(Library.RainbowHue, 1, 1)
-
-    local Gui = Library.ScreenGui
-    if not Gui then
-        return
-    end
-
-    -- Every UIStroke in this library gets a rainbow outline.
-    for _, Obj in Gui:GetDescendants() do
-        if Obj:IsA("UIStroke") and Obj.Parent then
-            Obj.Color = Library.RainbowColor
-        end
-    end
-
-    -- Slider fills and toggle switches explicitly marked as rainbow controls.
-    for _, Obj in Gui:GetDescendants() do
-        if Obj:GetAttribute("RainbowControl") then
-            if Obj:IsA("GuiObject") then
-                Obj.BackgroundColor3 = Library.RainbowColor
-            end
-        end
-    end
-end))
-
 return Library

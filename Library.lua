@@ -1434,7 +1434,7 @@ function Library:UpdateColorsUsingRegistry()
 end
 
 --// Rainbow UI updater \\--
-Library:GiveSignal(RunService.RenderStepped:Connect(function(Delta)
+table.insert(Library.Signals, RunService.RenderStepped:Connect(function(Delta)
     if Library.Unloaded then
         return
     end
